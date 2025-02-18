@@ -1,0 +1,5 @@
+matplotlib
+
+git+https://github.com/Rafipilot/embedding_bucketing
+
+git+https://github.com/aolabsai/ao_arch

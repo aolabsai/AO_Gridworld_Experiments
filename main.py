@@ -33,14 +33,14 @@ action_mapping = {
 
 
 agent = ao.Agent(Arch)
-
+pos = start
 steps = 0
 last_pos = start
 
 while not_solved:
     steps = steps +1
 
-    pos = start
+    
 
     surrondings = [[pos[0]-1, pos[1]], [pos[0], pos[1]-1], [pos[0]+1, pos[1]], [pos[0], pos[1]+1]]
 
@@ -64,9 +64,12 @@ while not_solved:
     if response_tuple in action_mapping:
         x, y = action_mapping[response_tuple]
 
-        print("mapping")
+        print("chosen x, y: ", x,y)
+
 
         pos = [x + pos[0], y + pos[1]] 
+        #
+        print("pos: ", pos)
 
 
     if not is_valid(pos):
@@ -83,7 +86,7 @@ while not_solved:
             else:
                 label = [0, 0]
             agent.next_state(input, label)  # Send feedback
-            pos= start
+            pos= last_pos
 
     elif pos == goal:
         print("solved")
@@ -91,8 +94,17 @@ while not_solved:
 
 
     elif (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])) > (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])):
-        print("Moved further away")
-        #agent.next_state(input, Cneg = True)
+        valid_labels = []
+        for label, (dx, dy) in action_mapping.items():
+            next_position = (pos[0] + dx, pos[1] + dy)
+            if is_valid(next_position):
+                valid_labels.append(label)
+        if valid_labels:
+            label = random.choice(valid_labels)
+        else:
+            label = [0, 0]
+        agent.next_state(input, LABEL=label)  # Send negative feedback
+        agent.reset_state()
 
     elif (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1]) >(abs(goal[0] - pos[0]) + abs(goal[1] - pos[1]))):
         print("got closer")
@@ -100,6 +112,7 @@ while not_solved:
 
 
     print(pos)
+    last_pos = pos
 
 
     

@@ -1,9 +1,32 @@
 import ao_core as ao
-from arch__gridworld import Arch
 import random
+import matplotlib.pyplot as plt
+
+import numpy as np 
+
+from arch__gridworld import Arch
 
 
 
+def visualize_grid(path):
+    grid = np.zeros((grid_size, grid_size))
+
+    # Mark start, goal, and obstacles
+    grid[start] = 0.5  # Start
+    grid[goal] = 0.8  # Goal
+    for obstacle in obs:
+        grid[obstacle] = 1  # Obstacle
+
+    # Create plot
+    fig, ax = plt.subplots()
+    ax.imshow(grid, cmap='gray', vmin=0, vmax=1)
+
+    # Plot the path
+    for [x, y] in path:
+        ax.text(y, x, '●', ha='center', va='center', color='red')
+
+    plt.title("Path taken by agent")
+    plt.show()
 
 
 def is_valid(pos):
@@ -33,86 +56,90 @@ action_mapping = {
 
 
 agent = ao.Agent(Arch)
-pos = start
-steps = 0
-last_pos = start
+episodes = 5
 
-while not_solved:
-    steps = steps +1
+for i in range(episodes):
+    pos = start
+    steps = 0
+    last_pos = start
+    not_solved = True
+    positions = []
 
-    
+    while not_solved:
+        steps = steps +1
 
-    surrondings = [[pos[0]-1, pos[1]], [pos[0], pos[1]-1], [pos[0]+1, pos[1]], [pos[0], pos[1]+1]]
+        
 
-    print(surrondings)
+        surrondings = [[pos[0]-1, pos[1]], [pos[0], pos[1]-1], [pos[0]+1, pos[1]], [pos[0], pos[1]+1]]
 
-    input = []
-    for i, v in enumerate(surrondings):
-        if v in obs:
-            input.append(1)
-        else:
-            input.append(0)
-    print(obs)
-    print(input)
-
-    response = agent.next_state(input)
-
-    response_tuple = tuple(response)
+        input = []
+        for i, v in enumerate(surrondings):
+            if v in obs:
+                input.append(1)
+            else:
+                input.append(0)
 
 
+        response = agent.next_state(input)
 
-    if response_tuple in action_mapping:
-        x, y = action_mapping[response_tuple]
-
-        print("chosen x, y: ", x,y)
+        response_tuple = tuple(response)
 
 
-        pos = [x + pos[0], y + pos[1]] 
-        #
-        print("pos: ", pos)
+
+        if response_tuple in action_mapping:
+            x, y = action_mapping[response_tuple]
+
+            pos = [x + pos[0], y + pos[1]] 
 
 
-    if not is_valid(pos):
-            # Find a valid action (label) that the agent should take
-            print("not valid: ", pos)
+
+        if not is_valid(pos):
+                # Find a valid action (label) that the agent should take
+                print("not valid: ", pos)
+                valid_labels = []
+                for label, (dx, dy) in action_mapping.items():
+                    next_position = (pos[0] + dx, pos[1] + dy)
+                    if is_valid(next_position):
+                        valid_labels.append(label)
+
+                if valid_labels:
+                    label = random.choice(valid_labels)
+                else:
+                    label = [0, 0]
+                agent.next_state(input, label)  # Send feedback
+                pos= last_pos
+
+        elif pos == goal:
+            print("solved")
+            not_solved = False
+
+            visualize_grid(positions)
+
+
+
+        elif (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])) > (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])):
             valid_labels = []
             for label, (dx, dy) in action_mapping.items():
                 next_position = (pos[0] + dx, pos[1] + dy)
                 if is_valid(next_position):
                     valid_labels.append(label)
-
             if valid_labels:
                 label = random.choice(valid_labels)
             else:
                 label = [0, 0]
-            agent.next_state(input, label)  # Send feedback
-            pos= last_pos
+            agent.next_state(input, LABEL=label)  # Send negative feedback
+            agent.reset_state()
 
-    elif pos == goal:
-        print("solved")
-        not_solved = False
-
-
-    elif (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])) > (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])):
-        valid_labels = []
-        for label, (dx, dy) in action_mapping.items():
-            next_position = (pos[0] + dx, pos[1] + dy)
-            if is_valid(next_position):
-                valid_labels.append(label)
-        if valid_labels:
-            label = random.choice(valid_labels)
-        else:
-            label = [0, 0]
-        agent.next_state(input, LABEL=label)  # Send negative feedback
-        agent.reset_state()
-
-    elif (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1]) >(abs(goal[0] - pos[0]) + abs(goal[1] - pos[1]))):
-        print("got closer")
-        agent.next_state(input, Cpos = True)
+        elif (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1]) >(abs(goal[0] - pos[0]) + abs(goal[1] - pos[1]))):
+            print("got closer")
+            agent.next_state(input, Cpos = True)
 
 
-    print(pos)
-    last_pos = pos
+        print(pos)
+        positions.append(pos)
+        last_pos = pos
 
 
-    
+
+
+        

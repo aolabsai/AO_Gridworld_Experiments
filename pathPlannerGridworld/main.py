@@ -133,22 +133,20 @@ for episode in range(episodes):
 
 
             
-        elif pos in positions:
-            num = 0
-            print("positions: ", positions)
-            for i in range(len(positions)):
-                if positions[i] == pos:
-                    num += 1
-            if num > 5:
-                print("loop")
-                valid_labels = []
-                for label, (dx, dy) in action_mapping.items():
-                    candidate = [pos[0] + dx, pos[1] + dy]
-                    if is_valid(candidate):
-                        valid_labels.append(label)
-                chosen_label = random.choice(valid_labels) if valid_labels else (0, 0)
-                agent.next_state(input_signal, LABEL=chosen_label)
-                agent.reset_state()
+        num = 0
+        for i in range(len(positions)):
+            if positions[i] == pos:
+                num += 1
+        if num > 5:
+            print("loop")
+            valid_labels = []
+            for label, (dx, dy) in action_mapping.items():
+                candidate = [pos[0] + dx, pos[1] + dy]
+                if is_valid(candidate):
+                    valid_labels.append(label)
+            chosen_label = random.choice(valid_labels) if valid_labels else (0, 0)
+            agent.next_state(input_signal, LABEL=chosen_label)
+            agent.reset_state()
 
 
         elif (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])) > (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])):

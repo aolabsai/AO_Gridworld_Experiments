@@ -63,8 +63,8 @@ plt.ion()
 fig, ax = plt.subplots(figsize=(5, 5))
 
 for episode in range(episodes):
-    pos = start.copy()
-    last_pos = start.copy()
+    pos = start
+    last_pos = start
     positions = [pos.copy()]
     not_solved = True
 
@@ -118,6 +118,39 @@ for episode in range(episodes):
             update_visualization(positions, pos, ax, grid_size, obs, start, goal)
             not_solved = False
             agent.reset_state()
+
+
+        elif pos == last_pos:
+            print("No movement")
+            valid_labels = []
+            for label, (dx, dy) in action_mapping.items():
+                candidate = [pos[0] + dx, pos[1] + dy]
+                if is_valid(candidate):
+                    valid_labels.append(label)
+            chosen_label = random.choice(valid_labels) if valid_labels else (0, 0)
+            agent.next_state(input_signal, LABEL=chosen_label)
+            agent.reset_state()
+
+
+            
+        elif pos in positions:
+            num = 0
+            print("positions: ", positions)
+            for i in range(len(positions)):
+                if positions[i] == pos:
+                    num += 1
+            if num > 5:
+                print("loop")
+                valid_labels = []
+                for label, (dx, dy) in action_mapping.items():
+                    candidate = [pos[0] + dx, pos[1] + dy]
+                    if is_valid(candidate):
+                        valid_labels.append(label)
+                chosen_label = random.choice(valid_labels) if valid_labels else (0, 0)
+                agent.next_state(input_signal, LABEL=chosen_label)
+                agent.reset_state()
+
+
         elif (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])) > (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])):
             valid_labels = []
             for label, (dx, dy) in action_mapping.items():
@@ -127,9 +160,13 @@ for episode in range(episodes):
             chosen_label = random.choice(valid_labels) if valid_labels else (0, 0)
             agent.next_state(input_signal, LABEL=chosen_label)  # Send negative feedback
             agent.reset_state()
+            print("got futher")
+
+            
         elif (abs(goal[0] - last_pos[0]) + abs(goal[1] - last_pos[1])) > (abs(goal[0] - pos[0]) + abs(goal[1] - pos[1])):
             print("Got closer")
             agent.next_state(input_signal, Cpos=True)
+                    
 
         print("Current position:", pos)
         positions.append(pos.copy())

@@ -18,12 +18,12 @@ def update_visualization(positions, current_pos, ax, grid_size, obs, start, goal
     ax.grid(which="minor", color="gray", linestyle='-', linewidth=1)
     ax.tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
 
-    # For each cell, display its binary value (Manhattan distance from the goal)
+    # For each cell, display its binary value 
     for i in range(grid_size):
         for j in range(grid_size):
             if [i, j] not in obs:
                 distance = abs(i - goal[0]) + abs(j - goal[1])
-                binary_val = format(distance, '04b')  # 4-bit binary representation
+                binary_val = format(distance, '04b')  # 4-bit binary representation ( input to agent!!)
                 ax.text(j + 0.5, i + 0.5, binary_val,
                         ha='center', va='center', fontsize=8, color='black')
 
@@ -165,7 +165,6 @@ for episode in range(episodes):
             agent.reset_state()
 
 
-            
         num = 0
         for i in range(len(positions)):
             if positions[i] == pos:

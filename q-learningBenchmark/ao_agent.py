@@ -51,17 +51,17 @@ def visualize_grid(path):
 def map_agent_response_to_direction(response):
     x = response[0]
     y = response[1]
-    if x == 1 and y == 0:
-        return [1,0] # Move right
-    elif x == 1 and y == 1:
-        return [-1,0] # move left
-    elif x == 0 and y == 1:
-        return [0,1] # Move up
-    elif x == 0 and y == 0:
-        return [0,-1] # Move down
+    if (x, y) == (1, 0):
+        return (1, 0)   # Move right
+    elif (x, y) == (1, 1):
+        return (-1, 0)  # Move left
+    elif (x, y) == (0, 1):
+        return (0, 1)   # Move up
+    elif (x, y) == (0, 0):
+        return (0, -1)  # Move down
     else:
         print("Invalid response from agent!", response)
-        print("Invalid response from agent!")
+
 
 def isvalid(pos):
     if pos[0] < 0 or pos[0] >= grid_size or pos[1] < 0 or pos[1] >= grid_size:
@@ -103,6 +103,10 @@ obs = []
 for i in range(num_obs):
     obsx = (random.randint(0, grid_size-1))
     obsy = (random.randint(0, grid_size-1))
+
+    while (obsx, obsy) == start or (obsx, obsy) == goal or (obsx, obsy) in obs:
+        obsx = (random.randint(0, grid_size-1))
+        obsy = (random.randint(0, grid_size-1))
 
     obs.append((obsx, obsy))
 

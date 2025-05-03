@@ -65,6 +65,26 @@ def isvalid(movement):
         return False
     return True
 
+def move_in_random_valid_direction(current_pos):
+        possible_moves = [[1, 0], [0, 1], [1, 1]]
+
+        valid_moves = []
+        for move in possible_moves:
+            next_pos = (current_pos[0] + move[0], current_pos[1] + move[1])
+            if isvalid(next_pos):
+                valid_moves.append((move))
+
+        chosen_move = valid_moves[0]
+
+        
+
+        if solved_once:
+            agent.next_state(input_to_agent, LABEL=chosen_move)
+
+        print(f"Moving randomly to {chosen_move}")
+        return chosen_move
+
+
 
 # Grid environment setup
 grid_size = 5
@@ -99,27 +119,23 @@ for i in range(episodes):
         candidate_pos = (pos[0] + dx, pos[1] + dy)
 
         if not isvalid(candidate_pos):
+            print("Invalid move, moving randomly")
 
-            possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
-
-            valid_moves = []
-            for move in possible_moves:
-                next_pos = (pos[0] + move[0], pos[1] + move[1])
-                if isvalid(next_pos):
-                    valid_moves.append((move, next_pos))
-
-            chosen_move, candidate_pos = random.choice(valid_moves)
-
+            chosen_move = move_in_random_valid_direction(pos)
+            dx, dy = map_agent_response_to_direction(chosen_move)
+            candidate_pos = (pos[0] + dx, pos[1] + dy)
             if solved_once:
                 agent.next_state(input_to_agent, LABEL=chosen_move)
 
         pos = candidate_pos
-        path.append(pos)
 
         if pos == goal:
+            solved_once = True # the agent has solved the maze at least once
             solved = True
             if number_of_steps_array:
                 if steps < min(number_of_steps_array): # if the agent got better 
+                    agent = ao.Agent(Arch) # reset the agent
+                    print("Agent got better, restting with new better agent")
                     for response in agent_responses:
                         agent.next_state(input_to_agent, LABEL=response)
 
@@ -127,25 +143,31 @@ for i in range(episodes):
             
 
         else:
-            print(f"Step {steps}: Moved to {pos}")
+            print(f"Current position: {pos}, Response: {response}, Steps: {steps}")
             agent_inputs.append(input_to_agent)
             agent_responses.append(response)
         
         # extra conditions
 
-        if random.random() < 0.05:  # 10% chance to randomly change direction
-            possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
+        ## been to same position before
+        if pos in path:
+            print("Agent has been to this position before, moving randomly")
+            chosen_move = move_in_random_valid_direction(pos)
 
-            valid_moves = []
-            for move in possible_moves:
-                next_pos = (pos[0] + move[0], pos[1] + move[1])
-                if isvalid(next_pos):
-                    valid_moves.append((move, next_pos))
 
-            chosen_move, candidate_pos = random.choice(valid_moves)
+        # if random.random() < 0.05:  # 10% chance to randomly change direction
+        #     possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
 
-            if solved_once:
-                agent.next_state(input_to_agent, LABEL=chosen_move)
+        #     valid_moves = []
+        #     for move in possible_moves:
+        #         next_pos = (pos[0] + move[0], pos[1] + move[1])
+        #         if isvalid(next_pos):
+        #             valid_moves.append((move, next_pos))
+
+        #     chosen_move, candidate_pos = random.choice(valid_moves)
+
+        #     if solved_once:
+        #         agent.next_state(input_to_agent, LABEL=chosen_move)
 
 
         path.append(pos)

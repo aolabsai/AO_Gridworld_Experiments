@@ -45,11 +45,33 @@ def visualize_grid(path):
     plt.title("Path taken by agent")
     plt.show()
 
+def map_agent_response_to_direction(response):
+    x = response[0]
+    y = response[1]
+    if x == 1 and y == 0:
+        return [1,0] # Move right
+    elif x == 1 and y == 1:
+        return [-1,0] # move left
+    elif x == 0 and y == 1:
+        return [0,1] # Move up
+    elif x == 0 and y == 0:
+        return [0,-1] # Move down
+    else:
+        print("Invalid response from agent!", response)
+        print("Invalid response from agent!")
+
+def isvalid(movement):
+    if movement[0] < 0 or movement[0] >= grid_size or movement[1] < 0 or movement[1] >= grid_size:
+        return False
+    return True
+
 
 # Grid environment setup
 grid_size = 5
 start = (0, 0)
 goal = (4, 4)
+
+solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
 
 episodes = 100
 number_of_steps_array = []
@@ -61,6 +83,8 @@ for i in range(episodes):
     path = [start]
     agent = ao.Agent(Arch)
 
+    agent_inputs = []
+    agent_responses = [] # keep track of the agent's responses so if it gets better we can give a pleasure signal
 
     while not solved:
         steps += 1
@@ -68,29 +92,64 @@ for i in range(episodes):
         input_to_agent = encode_position_binary(pos[0], pos[1])
 
         response = agent.next_state(input_to_agent)
-
-        x_response = response[0]
-        y_response = response[1]
-
-        new_pos = (pos[0] + x_response, pos[1] + y_response)
+        dx, dy = map_agent_response_to_direction(response)
 
 
-        # Ensure the agent stays within the grid boundaries
-        if new_pos[0] < 0 or new_pos[0] >= grid_size or new_pos[1] < 0 or new_pos[1] >= grid_size:
-            print("Out of bounds!")
-        else:
-            pos = new_pos
+#        # Move the agent
+        candidate_pos = (pos[0] + dx, pos[1] + dy)
+
+        if not isvalid(candidate_pos):
+
+            possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
+
+            valid_moves = []
+            for move in possible_moves:
+                next_pos = (pos[0] + move[0], pos[1] + move[1])
+                if isvalid(next_pos):
+                    valid_moves.append((move, next_pos))
+
+            chosen_move, candidate_pos = random.choice(valid_moves)
+
+            if solved_once:
+                agent.next_state(input_to_agent, LABEL=chosen_move)
+
+        pos = candidate_pos
+        path.append(pos)
 
         if pos == goal:
             solved = True
-            agent.next_state(input_to_agent, Cpos=True)
-            print("Goal reached in", steps, "steps!")
-            number_of_steps_array.append(steps)
+            if number_of_steps_array:
+                if steps < min(number_of_steps_array): # if the agent got better 
+                    for response in agent_responses:
+                        agent.next_state(input_to_agent, LABEL=response)
+
+            print(f"Goal reached in {steps} steps!")
+            
 
         else:
-            print(f"Step {steps}: Moved to {new_pos}")
+            print(f"Step {steps}: Moved to {pos}")
+            agent_inputs.append(input_to_agent)
+            agent_responses.append(response)
+        
+        # extra conditions
+
+        if random.random() < 0.05:  # 10% chance to randomly change direction
+            possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
+
+            valid_moves = []
+            for move in possible_moves:
+                next_pos = (pos[0] + move[0], pos[1] + move[1])
+                if isvalid(next_pos):
+                    valid_moves.append((move, next_pos))
+
+            chosen_move, candidate_pos = random.choice(valid_moves)
+
+            if solved_once:
+                agent.next_state(input_to_agent, LABEL=chosen_move)
+
 
         path.append(pos)
+    number_of_steps_array.append(steps)
 
 
 

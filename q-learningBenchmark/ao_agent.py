@@ -2,7 +2,6 @@ import ao_core as ao
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import time 
 plt.ion()
 
 ###ARCH
@@ -63,33 +62,36 @@ def map_agent_response_to_direction(response):
         print("Invalid response from agent!", response)
 
 
-def isvalid(pos):
+def isvalid(pos, prints=True):
     if pos[0] < 0 or pos[0] >= grid_size or pos[1] < 0 or pos[1] >= grid_size:
-        print("Invalid move, out of bounds!")
+        if prints:
+            print("Invalid move, out of bounds!")
         return False
     if pos in obs:
-        print("Invalid move, obstacle detected!")
+        if prints:
+            print("Invalid move, obstacle detected!")
         return False
-
     return True
 
 def move_in_random_valid_direction(current_pos):
-        possible_moves = [[1, 0], [0, 1], [1, 1], [0,0]]  # imagne the agent output here. This would need to use map_agent_response_to_direction to get the actual move
+        possible_moves = [[1, 0], [0, 1], [1, 1], [0,0]]  # need this to retrain the agent
+
+        actucal_moves = [(1,0), (0,1), (-1,0), (0,-1)] # the actual moves we want to make
+
 
         valid_moves = []
-        for move in possible_moves:
+        for move in actucal_moves:
             next_pos = (current_pos[0] + move[0], current_pos[1] + move[1])
-            if isvalid(next_pos):
+            if isvalid(next_pos, prints=False):
                 valid_moves.append((move))
 
+        #random.shuffle(valid_moves) # Not sure why this is not working
 
-        
-        chosen_move = valid_moves[0]
+        chosen_move = possible_moves[actucal_moves.index(valid_moves[0])]
 
         if solved_once:
             agent.next_state(input_to_agent, LABEL=chosen_move)
 
-        print(f"Moving randomly to {chosen_move}")
         return chosen_move
 
 
@@ -113,7 +115,9 @@ for i in range(num_obs):
 
 solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
 
-episodes = 10
+episodes = 100
+random_exploration = 0.2 # probability of random exploration
+decay = 0.9 # decay factor for the random exploration
 number_of_steps_array = []
 for i in range(episodes):
 
@@ -129,7 +133,7 @@ for i in range(episodes):
     while not solved:
         steps += 1
 
-        input_to_agent = encode_position_binary(pos[0], pos[1])
+        input_to_agent = encode_position_binary(pos[0], pos[1]) # the input to the agent is the position of the agent in binary
 
         response = agent.next_state(input_to_agent)
         dx, dy = map_agent_response_to_direction(response)
@@ -139,8 +143,7 @@ for i in range(episodes):
         candidate_pos = (pos[0] + dx, pos[1] + dy)
 
         if not isvalid(candidate_pos):
-            print("Invalid move, moving randomly")
-            print("atteempting to move to", candidate_pos)
+            print(f"Invalid move: {candidate_pos} , moving randomly")
             chosen_move = move_in_random_valid_direction(pos)
             dx, dy = map_agent_response_to_direction(chosen_move)
             candidate_pos = (pos[0] + dx, pos[1] + dy)
@@ -168,16 +171,17 @@ for i in range(episodes):
         
         # extra conditions
 
-        ## been to same position before
-        if pos in path:
-            if solved_once:
-                print("Agent has been to this position before, moving randomly")
-                chosen_move = move_in_random_valid_direction(pos)
+        ## been to same position before # Cant reallt use this because sometimes the agent needs to go back to the same position to get to the goal, think of a better way to implement
+        # if pos in path:
+        #     if solved_once:
+        #         print("Agent has been to this position before, moving randomly")
+        #         chosen_move = move_in_random_valid_direction(pos)
 
-        if steps > 100:
+        if steps > 1000:
             plt.ioff()
             visualize_grid(path)
             agent = ao.Agent(Arch)
+            number_of_steps_array.append(steps)
             print("Agent has taken too long, resetting")
             steps = 0
             pos = start
@@ -187,13 +191,13 @@ for i in range(episodes):
 
 
 
-        if random.random() < 0.05:  # 10% chance to randomly change direction
+        if random.random() < random_exploration:  # 10% chance to randomly change direction
             possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
 
             valid_moves = []
             for move in possible_moves:
                 next_pos = (pos[0] + move[0], pos[1] + move[1])
-                if isvalid(next_pos):
+                if isvalid(next_pos, prints=False):
                     valid_moves.append((move, next_pos))
 
             chosen_move, candidate_pos = random.choice(valid_moves)
@@ -204,7 +208,7 @@ for i in range(episodes):
 
         path.append(pos)
     number_of_steps_array.append(steps)
-
+    random_exploration *= decay  # Decay the exploration rate
 
 
 print("Final path taken by the agent:", path)

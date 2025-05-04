@@ -116,7 +116,7 @@ for i in range(num_obs):
 solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
 
 episodes = 100
-random_exploration = 0 # probability of random exploration
+random_exploration = 0.2 # probability of random exploration
 decay = 0.9 # decay factor for the random exploration
 number_of_steps_array = []
 agent = ao.Agent(Arch)

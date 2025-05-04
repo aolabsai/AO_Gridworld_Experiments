@@ -116,16 +116,17 @@ for i in range(num_obs):
 solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
 
 episodes = 100
-random_exploration = 0.2 # probability of random exploration
+random_exploration = 0 # probability of random exploration
 decay = 0.9 # decay factor for the random exploration
 number_of_steps_array = []
+agent = ao.Agent(Arch)
 for i in range(episodes):
 
     solved = False
     steps = 0
     pos = start
     path = [start]
-    agent = ao.Agent(Arch)
+    
 
     agent_inputs = []
     agent_responses = [] # keep track of the agent's responses so if it gets better we can give all states a pleasure signal
@@ -194,16 +195,7 @@ for i in range(episodes):
         if random.random() < random_exploration:  # 10% chance to randomly change direction
             possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
 
-            valid_moves = []
-            for move in possible_moves:
-                next_pos = (pos[0] + move[0], pos[1] + move[1])
-                if isvalid(next_pos, prints=False):
-                    valid_moves.append((move, next_pos))
-
-            chosen_move, candidate_pos = random.choice(valid_moves)
-
-            if solved_once:
-                agent.next_state(input_to_agent, LABEL=chosen_move)
+            candidate_pos = move_in_random_valid_direction(pos)
 
 
         path.append(pos)

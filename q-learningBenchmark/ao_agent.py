@@ -116,7 +116,7 @@ for i in range(num_obs):
 solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
 
 episodes = 100
-random_exploration = 0.2 # probability of random exploration
+random_exploration = 0.05 # probability of random exploration
 decay = 0.9 # decay factor for the random exploration
 number_of_steps_array = []
 agent = ao.Agent(Arch)
@@ -158,7 +158,7 @@ for i in range(episodes):
             solved = True
             if number_of_steps_array:
                 if steps < min(number_of_steps_array): # if the agent got better 
-                    agent = ao.Agent(Arch) # reset the agent
+                    #agent = ao.Agent(Arch) # maybe we can reset agent 
                     print("Agent got better, restting with new better agent")
                     for response in agent_responses:
                         agent.next_state(input_to_agent, Cpos=True)
@@ -178,10 +178,8 @@ for i in range(episodes):
         #         print("Agent has been to this position before, moving randomly")
         #         chosen_move = move_in_random_valid_direction(pos)
 
-        if steps > 1000:
+        if steps > 100:
             plt.ioff()
-            visualize_grid(path)
-            agent = ao.Agent(Arch)
             number_of_steps_array.append(steps)
             print("Agent has taken too long, resetting")
             steps = 0
@@ -189,6 +187,19 @@ for i in range(episodes):
             path = [start]
             agent_inputs = []
             agent_responses = []
+            random_exploration = 0.2
+
+        if steps > 1000:
+            plt.ioff()
+            agent = ao.Agent(Arch)  # Maybe we want reset agent
+            number_of_steps_array.append(steps)
+            print("Agent has taken too long, resetting")
+            steps = 0
+            pos = start
+            path = [start]
+            agent_inputs = []
+            agent_responses = []
+            random_exploration = 0.2
 
 
 

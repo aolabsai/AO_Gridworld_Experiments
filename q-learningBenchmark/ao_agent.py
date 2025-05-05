@@ -94,6 +94,17 @@ def move_in_random_valid_direction(current_pos):
 
         return chosen_move
 
+def reset_position(steps):
+    plt.ioff()
+    number_of_steps_array.append(steps)
+    steps = 0
+    pos = start
+    path = [start]
+    agent_inputs = []
+    agent_responses = []
+    random_exploration = 0.2
+
+    return pos, path, agent_inputs, agent_responses, random_exploration, steps
 
 
 # Grid environment setup
@@ -179,27 +190,13 @@ for i in range(episodes):
         #         chosen_move = move_in_random_valid_direction(pos)
 
         if steps > 100:
-            plt.ioff()
-            number_of_steps_array.append(steps)
-            print("Agent has taken too long, resetting")
-            steps = 0
-            pos = start
-            path = [start]
-            agent_inputs = []
-            agent_responses = []
-            random_exploration = 0.2
+            pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps)
 
-        if steps > 1000:
+        if steps > 1000: 
             plt.ioff()
             agent = ao.Agent(Arch)  # Maybe we want reset agent
-            number_of_steps_array.append(steps)
-            print("Agent has taken too long, resetting")
-            steps = 0
-            pos = start
-            path = [start]
-            agent_inputs = []
-            agent_responses = []
-            random_exploration = 0.2
+            visualize_grid(path) # if the agent is taking too long to solve the maze, we can visualize the path taken so far
+            pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps)
 
 
 

@@ -64,12 +64,9 @@ def map_agent_response_to_direction(response):
 
 def isvalid(pos, prints=True):
     if pos[0] < 0 or pos[0] >= grid_size or pos[1] < 0 or pos[1] >= grid_size:
-        if prints:
-            print("Invalid move, out of bounds!")
         return False
     if pos in obs:
-        if prints:
-            print("Invalid move, obstacle detected!")
+
         return False
     return True
 
@@ -85,7 +82,7 @@ def move_in_random_valid_direction(current_pos):
             if isvalid(next_pos, prints=False):
                 valid_moves.append((move))
 
-        #random.shuffle(valid_moves) # Not sure why this is not working
+        #random.shuffle(valid_moves) # Not sure why this makes it worse
 
         chosen_move = possible_moves[actucal_moves.index(valid_moves[0])]
 
@@ -94,10 +91,11 @@ def move_in_random_valid_direction(current_pos):
 
         return chosen_move
 
-def reset_position(steps):
+def reset_position(steps, reset_steps = True):
     plt.ioff()
-    number_of_steps_array.append(steps)
-    steps = 0
+    if reset_steps:
+        number_of_steps_array.append(steps)
+        steps = 0
     pos = start
     path = [start]
     agent_inputs = []
@@ -160,9 +158,11 @@ for i in range(episodes):
             print(f"Invalid move: {candidate_pos} , moving randomly")
             chosen_move = move_in_random_valid_direction(pos)
             dx, dy = map_agent_response_to_direction(chosen_move)
-            candidate_pos = (pos[0] + dx, pos[1] + dy)
+            #candidate_pos = (pos[0] + dx, pos[1] + dy)
             if solved_once:
                 agent.next_state(input_to_agent, LABEL=chosen_move)
+            pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps, reset_steps=False) # reset the position if the agent is 
+            continue
 
         if pos == goal:
             solved_once = True # the agent has solved the maze at least once
@@ -170,8 +170,9 @@ for i in range(episodes):
             if number_of_steps_array:
                 if steps < min(number_of_steps_array): # if the agent got better 
                     #agent = ao.Agent(Arch) # maybe we can reset agent so it gets rid of the old
-                    for response in agent_responses:
-                        agent.next_state(input_to_agent, Cpos=True)
+                    if steps < 100: # agent would get too slow 
+                        for response in agent_responses:
+                            agent.next_state(input_to_agent, Cpos=True)
 
                 agent_inputs = []
                 agent_responses = []
@@ -202,7 +203,7 @@ for i in range(episodes):
 
 
 
-        if random.random() < random_exploration:  # 10% chance to randomly change direction
+        if random.random() < random_exploration:  # Random exploration
             possible_moves = [[1, 0], [0, 0], [0, 1], [1, 1]]
 
             candidate_pos = move_in_random_valid_direction(pos)

@@ -124,10 +124,10 @@ for i in range(num_obs):
     obs.append((obsx, obsy))
 
 
-solved_once = False # we dont want to give it a pain signal if it has never solved the maze before
+solved_once = False # we dont want to give it a pain signal if it has never solved the maze before since it should be randomly exploring
 
 
-intital_exploration = 0.1 # initial exploration rate
+intital_exploration = 0.0 # initial exploration rate- can adjust this as a hyperparameter
 episodes = 100
 random_exploration = intital_exploration # probability of random exploration
 decay = 0.9 # decay factor for the random exploration
@@ -170,9 +170,11 @@ for i in range(episodes):
             if number_of_steps_array:
                 if steps < min(number_of_steps_array): # if the agent got better 
                     #agent = ao.Agent(Arch) # maybe we can reset agent so it gets rid of the old
-                    print("Agent got better, restting with new better agent")
                     for response in agent_responses:
                         agent.next_state(input_to_agent, Cpos=True)
+
+                agent_inputs = []
+                agent_responses = []
 
             print(f"Goal reached in {steps} steps!")
             
@@ -192,7 +194,7 @@ for i in range(episodes):
         # if steps > 100:
         #     pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps)
 
-        if steps > 100: 
+        if steps > 1000: 
             plt.ioff()
             agent = ao.Agent(Arch)  # Maybe we want reset agent
             #visualize_grid(path) # if the agent is taking too long to solve the maze, we can visualize the path taken so far

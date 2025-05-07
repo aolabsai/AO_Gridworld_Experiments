@@ -8,7 +8,7 @@ plt.ion()
 
 
 description = "Q-learningBenchmark"
-arch_i = [1, 1, 1, 1, 1, 1]     # 6 neurons corresponding to co-ordinates on the grid
+arch_i = [6, 4]     # 6 neurons corresponding to co-ordinates on the grid
 arch_z = [2]           # corresponding to which direction we should move
 arch_c = [0]           # adding 1 control neuron which we'll define with the instinct control function below
 
@@ -88,6 +88,8 @@ def move_in_random_valid_direction(current_pos):
 
         if solved_once:
             agent.next_state(input_to_agent, LABEL=chosen_move)
+            if DO_reset_states:
+                agent.reset_state()
 
         return chosen_move
 
@@ -103,6 +105,37 @@ def reset_position(steps, reset_steps = True):
     random_exploration = intital_exploration
 
     return pos, path, agent_inputs, agent_responses, random_exploration, steps
+
+def calc_obs(pos):
+    obs_array = [0]*4
+
+    possible_positions = [(pos[0] + 1, pos[1]), (pos[0] - 1, pos[1]), (pos[0], pos[1] + 1), (pos[0], pos[1] - 1)]
+
+    for position in possible_positions:
+        if position in obs:
+            if position == (pos[0] + 1, pos[1]):
+                obs_array[0] = 1
+            elif position == (pos[0] - 1, pos[1]):
+                obs_array[1] = 1
+            elif position == (pos[0], pos[1] + 1):
+                obs_array[2] = 1
+            elif position == (pos[0], pos[1] - 1):
+                obs_array[3] = 1
+
+            if pos[0] + 1 > grid_size:
+                obs_array[0] = 1
+            if pos[0] - 1 < 0:
+                obs_array[1] = 1
+            if pos[1] + 1 > grid_size:
+                obs_array[2] = 1
+            if pos[1] - 1 < 0:
+                obs_array[3] = 1
+            
+    return obs_array
+
+    
+
+
 
 
 # Grid environment setup
@@ -125,12 +158,17 @@ for i in range(num_obs):
 solved_once = False # we dont want to give it a pain signal if it has never solved the maze before since it should be randomly exploring
 
 
-intital_exploration = 0.0 # initial exploration rate- can adjust this as a hyperparameter
+intital_exploration = 0.01 # initial exploration rate- can adjust this as a hyperparameter
+DO_reset_states = False # reset_states could be our random exploration equivalent 
 episodes = 100
 random_exploration = intital_exploration # probability of random exploration
 decay = 0.9 # decay factor for the random exploration
+
+
 number_of_steps_array = []
 agent = ao.Agent(Arch)
+agent.save = False
+agent._gen = False
 for i in range(episodes):
 
     solved = False
@@ -146,8 +184,13 @@ for i in range(episodes):
         steps += 1
 
         input_to_agent = encode_position_binary(pos[0], pos[1]) # the input to the agent is the position of the agent in binary
+        obs_array = calc_obs(pos) # the input to the agent is the position of the agent in binary
+        input_to_agent = input_to_agent + obs_array
+
 
         response = agent.next_state(input_to_agent)
+        if DO_reset_states:
+            agent.reset_state()
         dx, dy = map_agent_response_to_direction(response)
 
 
@@ -161,6 +204,8 @@ for i in range(episodes):
             #candidate_pos = (pos[0] + dx, pos[1] + dy)
             if solved_once:
                 agent.next_state(input_to_agent, LABEL=chosen_move)
+                if DO_reset_states:
+                    agent.reset_state()
             pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps, reset_steps=False) # reset the position if the agent is 
             continue
 
@@ -173,6 +218,8 @@ for i in range(episodes):
                     if steps < 100: # agent would get too slow 
                         for response in agent_responses:
                             agent.next_state(input_to_agent, Cpos=True)
+                            if DO_reset_states:
+                                agent.reset_state()
 
                 agent_inputs = []
                 agent_responses = []
@@ -195,9 +242,12 @@ for i in range(episodes):
         # if steps > 100:
         #     pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps)
 
-        if steps > 1000: 
+        if steps > 500: 
             plt.ioff()
             agent = ao.Agent(Arch)  # Maybe we want reset agent
+            agent.save = False
+            agent._gen = False
+            #solved_once = False
             #visualize_grid(path) # if the agent is taking too long to solve the maze, we can visualize the path taken so far
             pos, path, agent_inputs, agent_responses, random_exploration, steps = reset_position(steps)
 
